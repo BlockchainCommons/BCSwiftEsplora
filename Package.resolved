@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "WolfAPI",
+        "repositoryURL": "https://github.com/WolfMcNally/WolfAPI",
+        "state": {
+          "branch": null,
+          "revision": "afff51de7d4a8fe34a23ed02301cf519db9e398c",
+          "version": "1.4.0"
+        }
+      },
+      {
+        "package": "WolfBase",
+        "repositoryURL": "https://github.com/WolfMcNally/WolfBase",
+        "state": {
+          "branch": null,
+          "revision": "5ccd17d176e9f05a71cb50b5dc03f967f3dd7646",
+          "version": "3.21.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
