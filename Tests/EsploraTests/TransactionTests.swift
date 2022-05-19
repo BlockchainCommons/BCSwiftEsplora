@@ -33,7 +33,7 @@ class TransactionTests: XCTestCase {
     
     func testTransactionOutputStatus() async throws {
         let status1 = try await api.transactionOutputStatus(txid: testTxid, index: 0)
-        XCTAssertFalse(status1.isSpent)
+        XCTAssertTrue(status1.isSpent)
         
         let txid2 = "f3e6066078e815bb24db0dfbff814f738943bddaaa76f8beba360cfe2882480a".hexData!
         let status2 = try await api.transactionOutputStatus(txid: txid2, index: 0)

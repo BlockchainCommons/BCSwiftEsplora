@@ -17,11 +17,11 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/WolfMcNally/WolfBase",
-            from: "3.14.0"
+            from: "4.0.0"
         ),
         .package(
             url: "https://github.com/WolfMcNally/WolfAPI",
-            from: "1.0.0"
+            from: "2.0.0"
         ),
     ],
     targets: [
