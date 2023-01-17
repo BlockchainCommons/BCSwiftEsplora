@@ -13,8 +13,7 @@ public class Esplora: API {
         let endpoint = Endpoint(
             scheme: .https,
             host: host ?? Self.defaultHost,
-            port: port,
-            basePath: "api"
+            port: port
         )
         super.init(endpoint: endpoint, authorization: nil, session: session)
     }
@@ -28,9 +27,10 @@ extension Esplora {
     /// Available fields: txid, version, locktime, size, weight, fee, vin, vout and status (see transaction format for /// details).
     ///
     /// `GET /tx/:txid`
-    public func transaction(txid: Data, mock: Mock? = nil) async throws -> Transaction {
+    public func transaction(txid: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Transaction {
         try await call(
             returning: Transaction.self,
+            network: network,
             path: ["tx", txid.hex],
             mock: mock
         )
@@ -41,9 +41,10 @@ extension Esplora {
     /// Available fields: confirmed (boolean), block_height (optional) and block_hash (optional).
     ///
     /// `GET /tx/:txid/status`
-    public func transactionStatus(txid: Data, mock: Mock? = nil) async throws -> TransactionStatus {
+    public func transactionStatus(txid: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> TransactionStatus {
         try await call(
             returning: TransactionStatus.self,
+            network: network,
             path: ["tx", txid.hex, "status"],
             mock: mock
         )
@@ -52,8 +53,9 @@ extension Esplora {
     /// Returns the raw transaction as binary data.
     ///
     /// `GET /tx/:txid/raw`
-    public func transactionRaw(txid: Data, mock: Mock? = nil) async throws -> Data {
+    public func transactionRaw(txid: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Data {
         try await call(
+            network: network,
             path: ["tx", txid.hex, "raw"],
             mock: mock
         )
@@ -68,9 +70,10 @@ extension Esplora {
     /// Returns a merkle inclusion proof for the transaction using Electrum's `blockchain.transaction.get_merkle` format.
     ///
     /// `GET /tx/:txid/merkle-proof`
-    public func transactionMerkleProof(txid: Data, mock: Mock? = nil) async throws -> MerkleProof {
+    public func transactionMerkleProof(txid: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> MerkleProof {
         try await call(
             returning: MerkleProof.self,
+            network: network,
             path: ["tx", txid.hex, "merkle-proof"],
             mock: mock
         )
@@ -79,10 +82,11 @@ extension Esplora {
     /// Returns the spending status of a transaction output.
     ///
     /// `GET /tx/:txid/outspend/:vout`
-    public func transactionOutputStatus(txid: Data, index: Int, mock: Mock? = nil) async throws -> TransactionOutputStatus {
+    public func transactionOutputStatus(txid: Data, index: Int, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> TransactionOutputStatus {
         try await call(
             returning: TransactionOutputStatus.self,
-            path: ["tx", txid.hex, "outspend", index],
+            network: network,
+            path: makePath(network, ["tx", txid.hex, "outspend", index]),
             mock: mock
         )
     }
@@ -90,10 +94,11 @@ extension Esplora {
     /// Returns the spending status of all transaction outputs.
     ///
     /// `GET /tx/:txid/outspends`
-    public func transactionOutputStatus(txid: Data, mock: Mock? = nil) async throws -> [TransactionOutputStatus] {
+    public func transactionOutputStatus(txid: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [TransactionOutputStatus] {
         try await call(
             returning: [TransactionOutputStatus].self,
-            path: ["tx", txid.hex, "outspends"],
+            network: network,
+            path: makePath(network, ["tx", txid.hex, "outspends"]),
             mock: mock
         )
     }
@@ -101,11 +106,12 @@ extension Esplora {
     /// Broadcast a raw transaction to the network.
     ///
     /// `POST /tx`
-    public func broadcastTransaction(tx: Data, mock: Mock? = nil) async throws -> Data {
+    public func broadcastTransaction(tx: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Data {
         try await call(
             returning: HexData.self,
             method: .post,
-            path: ["tx"],
+            network: network,
+            path: makePath(network, ["tx"]),
             body: RequestBody(data: tx.hex.utf8Data),
             mock: mock
         ).data
@@ -123,10 +129,11 @@ extension Esplora {
     ///
     /// `GET /address/:address`
     /// `GET /scripthash/:hash`
-    public func addressInfo(address: String, mock: Mock? = nil) async throws -> AddressInfo {
+    public func addressInfo(address: String, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> AddressInfo {
         try await call(
             returning: AddressInfo.self,
-            path: ["address", address],
+            network: network,
+            path: makePath(network, ["address", address]),
             mock: mock
         )
     }
@@ -137,10 +144,11 @@ extension Esplora {
     ///
     /// `GET /address/:address/txs`
     /// `GET /scripthash/:hash/txs`
-    public func addressHistory(address: String, mock: Mock? = nil) async throws -> [Transaction] {
+    public func addressHistory(address: String, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Transaction] {
         try await call(
             returning: [Transaction].self,
-            path: ["address", address, "txs"],
+            network: network,
+            path: makePath(network, ["address", address, "txs"]),
             mock: mock
         )
     }
@@ -151,10 +159,11 @@ extension Esplora {
     ///
     /// `GET /address/:address/txs/chain[/:last_seen_txid]`
     /// `GET /scripthash/:hash/txs/chain[/:last_seen_txid]`
-    public func addressHistory(address: String, lastSeenTXID: Data, mock: Mock? = nil) async throws -> [Transaction] {
+    public func addressHistory(address: String, lastSeenTXID: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Transaction] {
         try await call(
             returning: [Transaction].self,
-            path: ["address", address, "txs", "chain", lastSeenTXID.hex],
+            network: network,
+            path: makePath(network, ["address", address, "txs", "chain", lastSeenTXID.hex]),
             mock: mock
         )
     }
@@ -165,10 +174,11 @@ extension Esplora {
     ///
     /// `GET /address/:address/txs/mempool`
     /// `GET /scripthash/:hash/txs/mempool`
-    public func addressUnconfirmedHistory(address: String, mock: Mock? = nil) async throws -> [Transaction] {
+    public func addressUnconfirmedHistory(address: String, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Transaction] {
         try await call(
             returning: [Transaction].self,
-            path: ["address", address, "txs", "mempool"],
+            network: network,
+            path: makePath(network, ["address", address, "txs", "mempool"]),
             mock: mock
         )
     }
@@ -179,10 +189,11 @@ extension Esplora {
     ///
     /// `GET /address/:address/utxo`
     /// `GET /scripthash/:hash/utxo`
-    public func addressUTXOs(address: String, mock: Mock? = nil) async throws -> [UTXO] {
+    public func addressUTXOs(address: String, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [UTXO] {
         try await call(
             returning: [UTXO].self,
-            path: ["address", address, "utxo"],
+            network: network,
+            path: makePath(network, ["address", address, "utxo"]),
             mock: mock
         )
     }
@@ -192,10 +203,11 @@ extension Esplora {
     /// Returns a JSON array with up to 10 results.
     ///
     /// `GET /address-prefix/:prefix`
-    public func addressesWithPrefix(_ prefix: String, mock: Mock? = nil) async throws -> [String] {
+    public func addressesWithPrefix(_ prefix: String, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [String] {
         try await call(
             returning: [String].self,
-            path: ["address-prefix", prefix],
+            network: network,
+            path: makePath(network, ["address-prefix", prefix]),
             mock: mock
         )
     }
@@ -209,10 +221,11 @@ extension Esplora {
     /// The response from this endpoint can be cached indefinitely.
     ///
     /// `GET /block/:hash`
-    public func block(hash: Data, mock: Mock? = nil) async throws -> Block {
+    public func block(hash: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Block {
         try await call(
             returning: Block.self,
-            path: ["block", hash.hex],
+            network: network,
+            path: makePath(network, ["block", hash.hex]),
             mock: mock
         )
     }
@@ -222,10 +235,11 @@ extension Esplora {
     /// The response from this endpoint can be cached indefinitely.
     ///
     /// `GET /block/:hash/header`
-    public func blockHeader(hash: Data, mock: Mock? = nil) async throws -> Data {
+    public func blockHeader(hash: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Data {
         try await call(
             returning: HexData.self,
-            path: ["block", hash.hex, "header"],
+            network: network,
+            path: makePath(network, ["block", hash.hex, "header"]),
             mock: mock
         ).data
     }
@@ -235,10 +249,11 @@ extension Esplora {
     /// Available fields: `in_best_chain` (boolean, false for orphaned blocks), `next_best` (the hash of the /next block, only available for blocks in the best chain).
     ///
     /// `GET /block/:hash/status`
-    public func blockStatus(hash: Data, mock: Mock? = nil) async throws -> BlockStatus {
+    public func blockStatus(hash: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> BlockStatus {
         try await call(
             returning: BlockStatus.self,
-            path: ["block", hash.hex, "status"],
+            network: network,
+            path: makePath(network, ["block", hash.hex, "status"]),
             mock: mock
         )
     }
@@ -249,10 +264,11 @@ extension Esplora {
     /// The response from this endpoint can be cached indefinitely.
     ///
     /// `GET /block/:hash/txs[/:start_index]`
-    public func blockTransactions(hash: Data, startIndex: Int? = nil, mock: Mock? = nil) async throws -> [Transaction] {
+    public func blockTransactions(hash: Data, startIndex: Int? = nil, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Transaction] {
         try await call(
             returning: [Transaction].self,
-            path: ["block", hash.hex, "txs", startIndex as Any],
+            network: network,
+            path: makePath(network, ["block", hash.hex, "txs", startIndex as Any]),
             mock: mock
         )
     }
@@ -262,10 +278,11 @@ extension Esplora {
     /// The response from this endpoint can be cached indefinitely.
     ///
     /// `GET /block/:hash/txids`
-    public func blockTransactionIDs(hash: Data, mock: Mock? = nil) async throws -> [Data] {
+    public func blockTransactionIDs(hash: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Data] {
         try await call(
             returning: [HexData].self,
-            path: ["block", hash.hex, "txids"],
+            network: network,
+            path: makePath(network, ["block", hash.hex, "txids"]),
             mock: mock
         ).map { $0.data }
     }
@@ -275,10 +292,11 @@ extension Esplora {
     /// The response from this endpoint can be cached indefinitely.
     ///
     /// `GET /block/:hash/txid/:index`
-    public func blockTransactionID(hash: Data, index: Int, mock: Mock? = nil) async throws -> Data {
+    public func blockTransactionID(hash: Data, index: Int, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Data {
         try await call(
             returning: HexData.self,
-            path: ["block", hash.hex, "txid", index],
+            network: network,
+            path: makePath(network, ["block", hash.hex, "txid", index]),
             mock: mock
         ).data
     }
@@ -288,9 +306,10 @@ extension Esplora {
     /// The response from this endpoint can be cached indefinitely.
     ///
     /// `GET /block/:hash/raw`
-    public func blockRaw(hash: Data, mock: Mock? = nil) async throws -> Data {
+    public func blockRaw(hash: Data, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Data {
         try await call(
-            path: ["block", hash.hex, "raw"],
+            network: network,
+            path: makePath(network, ["block", hash.hex, "raw"]),
             mock: mock
         )
     }
@@ -300,10 +319,11 @@ extension Esplora {
     /// `GET /block-height/:height`
     ///
     /// https://github.com/Blockstream/esplora/blob/master/API.md#get-block-heightheight
-    public func blockHash(at height: Int, mock: Mock? = nil) async throws -> Data {
+    public func blockHash(at height: Int, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Data {
         try await call(
             returning: HexData.self,
-            path: ["block-height", height],
+            network: network,
+            path: makePath(network, ["block-height", height]),
             mock: mock
         ).data
     }
@@ -313,10 +333,11 @@ extension Esplora {
     /// `GET /blocks[/:start_height]`
     ///
     /// https://github.com/Blockstream/esplora/blob/master/API.md#get-blocksstart_height
-    public func newestBlocks(startHeight: Int? = nil, mock: Mock? = nil) async throws -> [Block] {
+    public func newestBlocks(startHeight: Int? = nil, network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Block] {
         try await call(
             returning: [Block].self,
-            path: ["blocks", startHeight as Any],
+            network: network,
+            path: makePath(network, ["blocks", startHeight as Any]),
             mock: mock
         )
     }
@@ -326,10 +347,11 @@ extension Esplora {
     /// `GET /blocks/tip/height`
     ///
     /// https://github.com/Blockstream/esplora/blob/master/API.md#get-blockstipheight
-    public func currentBlockHeight(mock: Mock? = nil) async throws -> Int {
+    public func currentBlockHeight(network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Int {
         try await call(
             returning: Int.self,
-            path: ["blocks", "tip", "height"],
+            network: network,
+            path: makePath(network, ["blocks", "tip", "height"]),
             mock: mock
         )
     }
@@ -339,10 +361,11 @@ extension Esplora {
     /// `GET /blocks/tip/hash`
     ///
     /// https://github.com/Blockstream/esplora/blob/master/API.md#get-blockstiphash
-    public func latestBlockHash(mock: Mock? = nil) async throws -> String {
+    public func latestBlockHash(network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> String {
         try await call(
             returning: String.self,
-            path: ["blocks", "tip", "hash"],
+            network: network,
+            path: makePath(network, ["blocks", "tip", "hash"]),
             mock: mock
         )
     }
@@ -361,10 +384,11 @@ extension Esplora {
     /// An array of `(feerate, vsize)` tuples, where each entry's `vsize` is the total `vsize` of transactions paying more than `feerate` but less than the previous entry's `feerate` (except for the first entry, which has no upper bound). This matches the format used by the Electrum RPC protocol for `mempool.get_fee_histogram`.
     ///
     /// `GET /mempool`
-    public func mempool(mock: Mock? = nil) async throws -> Mempool {
+    public func mempool(network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> Mempool {
         try await call(
             returning: Mempool.self,
-            path: ["mempool"],
+            network: network,
+            path: makePath(network, ["mempool"]),
             mock: mock
         )
     }
@@ -374,10 +398,11 @@ extension Esplora {
     /// The order of the txids is arbitrary and does not match bitcoind's.
     ///
     /// `GET /mempool/txids`
-    public func mempoolTXIDs(mock: Mock? = nil) async throws -> [Data] {
+    public func mempoolTXIDs(network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Data] {
         try await call(
             returning: [HexData].self,
-            path: ["mempool", "txids"],
+            network: network,
+            path: makePath(network, ["mempool", "txids"]),
             mock: mock
         ).map { $0.data }
     }
@@ -387,10 +412,11 @@ extension Esplora {
     /// Each `MempoolTransaction` object contains simplified overview data, with the following fields: `txid`, `fee`, `vSize` and `value`.
     ///
     /// `GET /mempool/recent`
-    public func mempoolRecentTransactions(mock: Mock? = nil) async throws -> [MempoolTransaction] {
+    public func mempoolRecentTransactions(network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [MempoolTransaction] {
         try await call(
             returning: [MempoolTransaction].self,
-            path: ["mempool", "recent"],
+            network: network,
+            path: makePath(network, ["mempool", "recent"]),
             mock: mock
         )
     }
@@ -404,10 +430,11 @@ extension Esplora {
     /// The available confirmation targets are 1-25, 144, 504 and 1008 blocks.
     ///
     /// `GET /fee-estimates`
-    public func feeEstimates(mock: Mock? = nil) async throws -> [Int: Double] {
+    public func feeEstimates(network: EsploraNetwork = .mainnet, mock: Mock? = nil) async throws -> [Int: Double] {
         try await call(
             returning: FeeEstimates.self,
-            path: ["fee-estimates"],
+            network: network,
+            path: makePath(network, ["fee-estimates"]),
             mock: mock
         ).estimates
     }

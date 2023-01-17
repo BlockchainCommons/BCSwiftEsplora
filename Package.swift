@@ -17,7 +17,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://github.com/WolfMcNally/WolfBase",
-            from: "4.0.0"
+            from: "5.0.0"
         ),
         .package(
             url: "https://github.com/WolfMcNally/WolfAPI",
